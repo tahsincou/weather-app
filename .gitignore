@@ -1,0 +1,5 @@
+web/
+windows/
+linux/
+macos/
+pubspec.lock
