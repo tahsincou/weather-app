@@ -1,9 +1,15 @@
+// ignore_for_file: avoid_print
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:weather/model/weather.dart';
+import 'package:weather/services/location_service.dart';
 import 'package:weather/services/weather_api_client.dart';
+import 'package:weather/util/constant.dart';
 import 'package:weather/widgets/additional_inormation.dart';
 import 'package:weather/widgets/current_weather.dart';
-import 'package:location/location.dart';
+import 'package:geolocator/geolocator.dart';
 
 
 void main() {
@@ -29,51 +35,34 @@ class MyApp extends StatelessWidget {
 
 class Home extends StatefulWidget {
   const Home({super.key});
-
   @override
   State<Home> createState() => _HomeState();
 }
+
 
 class _HomeState extends State<Home> {
 
   WeatherApiClient client = WeatherApiClient();
   Weather? weather;
-  Location location = Location();
-
-bool _serviceEnabled = false;
-PermissionStatus? _permissionGranted;
-LocationData? _locationData;
+  late Position position;
+  String long = "", lat = "";
+  LocationService locationService = LocationService();
 
   @override
   void initState() {
+    setLatLong();
     super.initState();
-    _getLocation();
   }
-   Future<void> _getLocation() async {
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        return;
-      }
-    }
 
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
-
-    _locationData = await location.getLocation();
+  setLatLong() async{
+    position = await locationService.checkGps();
+    lat = position != null ? position.latitude.toString(): defaultLat;
+    long = position != null ? position.longitude.toString() : defaultLong;
     setState(() {});
   }
 
-  
-
   Future<void> getData() async{
-    weather = await client.getCurrentWeather("Dhaka");
+    weather = await client.getCurrentWeatherByLatLong(lat,long);
   }
 
   @override
@@ -85,7 +74,7 @@ LocationData? _locationData;
         elevation: 0.0,
         title:  Text("Weather App", style: TextStyle(color: Theme.of(context).primaryColorLight),),
         centerTitle: true,
-        leading: IconButton(icon: const Icon(Icons.menu), onPressed: (){}, color:Theme.of(context).primaryColorLight),
+        //leading: IconButton(icon: const Icon(Icons.menu), onPressed: (){}, color:Theme.of(context).primaryColorLight),
       ),
       body: FutureBuilder(
         future: getData(),
@@ -96,7 +85,7 @@ LocationData? _locationData;
           crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 currentWeather(Icons.wb_sunny_rounded, 
-                "${weather!.temp!.toString()}°", 
+                "${(weather!.temp!.round()- 273).toString()}°C", 
                 weather!.cityName!, 
                 Colors.yellow),
                 const SizedBox(height: 20),
@@ -111,7 +100,7 @@ LocationData? _locationData;
                 weather!.wind!.toString(), 
                 weather!.humidity!.toString(),
                 weather!.pressure!.toString(),
-                weather!.feelsLike!.toString()
+                "${(weather!.feelsLike!.round()- 273).toString()}°C", 
                 ),
               ],
             ),

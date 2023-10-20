@@ -2,4 +2,6 @@ web/
 windows/
 linux/
 macos/
+build/
 pubspec.lock
+.dart_tool/
