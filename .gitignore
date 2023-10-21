@@ -10,7 +10,11 @@ pubspec.lock
 .history
 .svn/
 migrate_working_dir/
-
+linux/
+web/
+windows/
+macos/
+.flutter-plugins
 # IntelliJ related
 *.iml
 *.ipr
